@@ -5,6 +5,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by Anton on 16.09.2017.
@@ -122,10 +123,12 @@ public class Serializer {
             if (fieldValue.lastIndexOf(VALUES_SEPARATOR) != -1)
                 fieldValue = fieldValue.substring(0, fieldValue.lastIndexOf(VALUES_SEPARATOR));
             objectStringContainer[0] = objectString.substring(objectString.indexOf(LINE_SEPARATOR) + LINE_SEPARATOR.length());
-            return parseStandard(fieldValue, field.getType());
+            return parseStandard(field.getType(), fieldValue);
         }
         else if (field.getType().isArray()) {
+            objectStringContainer[0] = objectString;
             String arrayString = getNestedObjectString(objectStringContainer, ARRAY_BEGIN, ARRAY_END);
+            return parseArray(field.getType(), new String[]{arrayString});
         }
         else {
             objectStringContainer[0] = objectString;
@@ -133,18 +136,9 @@ public class Serializer {
             //System.out.println(nestedObjectString);
             return parseObject(field.getType(), new String[]{nestedObjectString});
         }
-        return null;
     }
 
-    private String checkAndRemoveFieldName(String objectString, Field field) {
-        String fieldName = objectString.trim().substring(0, objectString.indexOf(FIELD_SEPARATOR));
-        fieldName = fieldName.substring(fieldName.indexOf(QUOTE_SEPARATOR) + 1, fieldName.lastIndexOf(QUOTE_SEPARATOR));
-        if (!fieldName.equals(field.getName()))
-            throw new RuntimeException("Field name in the class differs from appropriate name in the file");
-        return objectString.substring(objectString.indexOf(FIELD_SEPARATOR) + FIELD_SEPARATOR.length());
-    }
-
-    private Object parseStandard(String standardString, Class<?> standardToken) {
+    private Object parseStandard(Class<?> standardToken, String standardString) {
         if (standardToken == byte.class || standardToken == Byte.class)
             return Byte.parseByte(standardString);
         if (standardToken == short.class || standardToken == Short.class)
@@ -162,7 +156,38 @@ public class Serializer {
         if (standardToken == double.class || standardToken == Double.class)
             return Double.parseDouble(standardString);
         return standardString.substring(standardString.indexOf
-                (QUOTE_SEPARATOR) + 1, standardString.lastIndexOf(QUOTE_SEPARATOR));
+                (QUOTE_SEPARATOR) + QUOTE_SEPARATOR.length(), standardString.lastIndexOf(QUOTE_SEPARATOR));
+    }
+
+    private Object parseArray(Class<?> classToken, String[] objectStringContainer){
+        String objectString = objectStringContainer[0];
+        objectString = objectString.substring(objectString.indexOf(LINE_SEPARATOR) + LINE_SEPARATOR.length(),
+                objectString.lastIndexOf(ARRAY_END)).trim();
+        Class<?> arrayElementType = classToken.getComponentType();
+        List<Object> arrayElementsList = new ArrayList<>();
+        if (isStandardType(arrayElementType)) {
+            arrayElementsList = Arrays.stream(objectString.split(LINE_SEPARATOR)).map(elementString -> {
+                if (elementString.lastIndexOf(VALUES_SEPARATOR) != -1)
+                    elementString = elementString.substring(0, elementString.lastIndexOf(VALUES_SEPARATOR));
+                return parseStandard(arrayElementType, elementString.trim());
+            }).collect(Collectors.toList());
+        } else if (arrayElementType.isArray()) {
+
+        }
+        Object[] array = arrayElementsList.toArray();
+        Object[] result = new Object[array.length];
+        for (int i = 0; i < array.length; i++) {
+            result[i] = Array.get(array, i);
+        }
+        return result;
+    }
+
+    private String checkAndRemoveFieldName(String objectString, Field field) {
+        String fieldName = objectString.trim().substring(0, objectString.indexOf(FIELD_SEPARATOR));
+        fieldName = fieldName.substring(fieldName.indexOf(QUOTE_SEPARATOR) + 1, fieldName.lastIndexOf(QUOTE_SEPARATOR));
+        if (!fieldName.equals(field.getName()))
+            throw new RuntimeException("Field name in the class differs from appropriate name in the file");
+        return objectString.substring(objectString.indexOf(FIELD_SEPARATOR) + FIELD_SEPARATOR.length());
     }
 
     private String getNestedObjectString(String[] objectStringContainer, String beginToken, String endToken) {
@@ -183,13 +208,14 @@ public class Serializer {
             }
             else {
                 objectString = objectString.substring(endTokenPosition + endToken.length());
-                length += endTokenPosition + endToken.length();
+                length += (endTokenPosition + endToken.length());
                 nestingCounter--;
             }
+
         }
-        //System.out.println(objectString);
-        result = objectStringContainer[0].substring(0, length); //!?
+        result = objectStringContainer[0].substring(0, length + 1); //!?
         objectStringContainer[0] = objectString;
+        //System.out.println(result);
         return result;
     }
 
