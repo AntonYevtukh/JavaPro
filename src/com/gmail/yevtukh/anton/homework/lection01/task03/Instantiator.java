@@ -3,11 +3,12 @@ package com.gmail.yevtukh.anton.homework.lection01.task03;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
 /**
  * Created by Anton on 16.09.2017.
+ * Создает объекты заданного класса. Если есть, использует конструктор по умолчанию, иначе берет первый попавшийся,
+ * передавая в него параметры по умолчанию - 0, false, null
  */
 public class Instantiator {
 

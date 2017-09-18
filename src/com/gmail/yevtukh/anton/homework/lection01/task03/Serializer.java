@@ -9,8 +9,17 @@ import java.util.stream.Collectors;
 
 /**
  * Created by Anton on 16.09.2017.
- */
-//Серализует и десереализует во что-то похожее на JSON
+ * Серализует и десереализует во что-то похожее на JSON
+ * Сериализует стандартные типы (примитивы, оболочки, строки), пользовательские объекты, массивы
+ * (в том числе многомерные)
+ * Много быдлокода, сделано в лоб, примерная идея (десереализации) такова:
+ * Считываем файл в строку.
+ * Через рефлексию получаем нужные поля, включая родительские.
+ * Определяем общий тип - стандартное, объект, массив.
+ * В зависимости от общего типа пытаемся прочитать нужный кусок информации и распарсть его в значение поля,
+ * удалив этот кусок из самой строки
+ * Exception'ы чисто для галочки
+*/
 public class Serializer {
 
     private static final String LINE_SEPARATOR = System.lineSeparator();
@@ -49,8 +58,12 @@ public class Serializer {
     }
 
     private String objectToString(Object obj, int indentCount) {
+        if (obj == null)
+            return "null";
         if (isStandardType(obj.getClass()))
             return (obj.getClass() == String.class ? QUOTE_SEPARATOR + obj + QUOTE_SEPARATOR : obj.toString());
+        if (obj.getClass().isArray())
+            return arrayToString(obj, indentCount);
         String indent = String.join("", Collections.nCopies(indentCount, INDENT));
         StringBuffer result = new StringBuffer(OBJECT_BEGIN + LINE_SEPARATOR);
         Class<?> objectClass = obj.getClass();
@@ -64,13 +77,10 @@ public class Serializer {
                 if (isStandardType(fieldType))
                     result.append(fieldType == String.class ?
                     QUOTE_SEPARATOR + field.get(obj) + QUOTE_SEPARATOR : field.get(obj));
-                else if (fieldType.isArray()) {
-                    System.out.println(field.get(obj).getClass().getName());
+                else if (fieldType.isArray())
                     result.append(arrayToString(field.get(obj), indentCount + 1));
-                }
-                else {
+                else
                     result.append(objectToString(field.get(obj), indentCount + 1));
-                }
                 result.append(VALUES_SEPARATOR + LINE_SEPARATOR);
             }
             result.replace(result.lastIndexOf(VALUES_SEPARATOR),
@@ -91,13 +101,14 @@ public class Serializer {
         StringBuffer result = new StringBuffer(ARRAY_BEGIN + LINE_SEPARATOR);
         int arrayLength = Array.getLength(obj);
         for (int i = 0; i < arrayLength; i++)
-            result.append(indent + objectToString(Array.get(obj, i), indentCount) +
+            result.append(indent + objectToString(Array.get(obj, i), indentCount + 1) +
                     ((i < arrayLength - 1) ? VALUES_SEPARATOR : "") + LINE_SEPARATOR);
         indent = indent.substring(0, indent.lastIndexOf(INDENT));
         result.append(indent + ARRAY_END);
         return result.toString();
     }
 
+    //ObjectStringContainer - это как-бы эрзац-ref/out из C#, ибо каждый метод должен удалять начало строки
     private  <T> T parseObject(Class<T> classToken, String[] objectStringContainer) {
         try {
             String objectString = objectStringContainer[0];
@@ -112,12 +123,21 @@ public class Serializer {
             }
             return instance;
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            System.out.println(e.getMessage());
             throw new RuntimeException("Unable to create an instance for the class: " + classToken.getName());
         }
     }
 
     private Object parseField(Field field, String[] objectStringContainer) {
         String objectString = checkAndRemoveFieldName(objectStringContainer[0], field);
+        if (objectString.indexOf("null") == 0)
+            if (!field.getType().isPrimitive()) {
+                objectString = objectString.substring(objectString.indexOf(LINE_SEPARATOR) + 1);
+                objectStringContainer[0] = objectString;
+                return null;
+            }
+            else
+                throw new IllegalArgumentException("Field of primitive type can't has a null value");
         if (isStandardType(field.getType())) {
             String fieldValue = objectString.substring(0, objectString.indexOf(LINE_SEPARATOR));
             if (fieldValue.lastIndexOf(VALUES_SEPARATOR) != -1)
@@ -133,12 +153,16 @@ public class Serializer {
         else {
             objectStringContainer[0] = objectString;
             String nestedObjectString = getNestedObjectString(objectStringContainer, OBJECT_BEGIN, OBJECT_END);
-            //System.out.println(nestedObjectString);
             return parseObject(field.getType(), new String[]{nestedObjectString});
         }
     }
 
     private Object parseStandard(Class<?> standardToken, String standardString) {
+        if (standardString.equals("null"))
+            if (!standardToken.isPrimitive())
+                return null;
+            else
+                throw new IllegalArgumentException("Field of primitive type can't has a null value");
         if (standardToken == byte.class || standardToken == Byte.class)
             return Byte.parseByte(standardString);
         if (standardToken == short.class || standardToken == Short.class)
@@ -163,6 +187,7 @@ public class Serializer {
         String objectString = objectStringContainer[0];
         objectString = objectString.substring(objectString.indexOf(LINE_SEPARATOR) + LINE_SEPARATOR.length(),
                 objectString.lastIndexOf(ARRAY_END)).trim();
+        objectStringContainer[0] = objectString;
         Class<?> arrayElementType = classToken.getComponentType();
         List<Object> arrayElementsList = new ArrayList<>();
         if (isStandardType(arrayElementType)) {
@@ -172,18 +197,33 @@ public class Serializer {
                 return parseStandard(arrayElementType, elementString.trim());
             }).collect(Collectors.toList());
         } else if (arrayElementType.isArray()) {
-
+            String elementString;
+            while (objectStringContainer[0].indexOf(ARRAY_BEGIN) != -1){
+                elementString = getNestedObjectString(objectStringContainer, ARRAY_BEGIN, ARRAY_END);
+                if (objectStringContainer[0].contains(ARRAY_BEGIN))
+                    objectStringContainer[0] = objectStringContainer[0].substring(objectStringContainer[0].indexOf(ARRAY_BEGIN));
+                arrayElementsList.add(parseArray(arrayElementType, new String[]{elementString}));
+            }
+        }   else {
+            String elementString;
+            while (objectStringContainer[0].indexOf(OBJECT_BEGIN) != -1) {
+                elementString = getNestedObjectString(objectStringContainer, OBJECT_BEGIN, OBJECT_END);
+                if (objectStringContainer[0].contains(OBJECT_BEGIN))
+                    objectStringContainer[0] = objectStringContainer[0].substring(objectStringContainer[0].indexOf(OBJECT_BEGIN));
+                arrayElementsList.add(parseObject(arrayElementType, new String[]{elementString}));
+            }
         }
-        Object[] array = arrayElementsList.toArray();
-        Object[] result = new Object[array.length];
-        for (int i = 0; i < array.length; i++) {
-            result[i] = Array.get(array, i);
+
+        Object result = Array.newInstance(arrayElementType, arrayElementsList.size());
+        for (int i = 0; i < arrayElementsList.size(); i++) {
+            Array.set(result, i, arrayElementsList.get(i));
         }
         return result;
     }
 
     private String checkAndRemoveFieldName(String objectString, Field field) {
-        String fieldName = objectString.trim().substring(0, objectString.indexOf(FIELD_SEPARATOR));
+        int fieldLength = objectString.trim().indexOf(FIELD_SEPARATOR);
+        String fieldName = objectString.trim().substring(0, fieldLength);
         fieldName = fieldName.substring(fieldName.indexOf(QUOTE_SEPARATOR) + 1, fieldName.lastIndexOf(QUOTE_SEPARATOR));
         if (!fieldName.equals(field.getName()))
             throw new RuntimeException("Field name in the class differs from appropriate name in the file");
@@ -215,7 +255,6 @@ public class Serializer {
         }
         result = objectStringContainer[0].substring(0, length + 1); //!?
         objectStringContainer[0] = objectString;
-        //System.out.println(result);
         return result;
     }
 
@@ -224,7 +263,7 @@ public class Serializer {
 
         do {
             for (Field field : classToken.getDeclaredFields())
-                //if (field.isAnnotationPresent(Save.class))
+                if (field.isAnnotationPresent(Save.class))
                     savedFields.add(field);
             classToken = classToken.getSuperclass();
         } while (classToken != Object.class);
