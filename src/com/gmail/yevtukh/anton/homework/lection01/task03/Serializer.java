@@ -108,7 +108,8 @@ public class Serializer {
         return result.toString();
     }
 
-    //ObjectStringContainer - это как-бы эрзац-ref/out из C#, ибо каждый метод должен удалять начало строки
+    //ObjectStringContainer - это как-бы эрзац-ref/out из C#, ибо каждый метод должен удалять начало строки,
+    //т.е результаты манипуляций в теле метода с переданной строкой должны сохраняться
     private  <T> T parseObject(Class<T> classToken, String[] objectStringContainer) {
         try {
             String objectString = objectStringContainer[0];
@@ -221,6 +222,7 @@ public class Serializer {
         return result;
     }
 
+    //проверяет сохраненное имя поля на соответствие и удаляет его из строки
     private String checkAndRemoveFieldName(String objectString, Field field) {
         int fieldLength = objectString.trim().indexOf(FIELD_SEPARATOR);
         String fieldName = objectString.trim().substring(0, fieldLength);
@@ -230,6 +232,7 @@ public class Serializer {
         return objectString.substring(objectString.indexOf(FIELD_SEPARATOR) + FIELD_SEPARATOR.length());
     }
 
+    //если ожидается поле, являющееся объектом/массивом, счиывает его в строку, удаляя из общей строки
     private String getNestedObjectString(String[] objectStringContainer, String beginToken, String endToken) {
         int nestingCounter = 1;
         int length = 0;
@@ -253,11 +256,12 @@ public class Serializer {
             }
 
         }
-        result = objectStringContainer[0].substring(0, length + 1); //!?
+        result = objectStringContainer[0].substring(0, length + 1);
         objectStringContainer[0] = objectString;
         return result;
     }
 
+    //Выбирает поля, которые надо сериализовать, включая поля классов-родителей
     private Field[] getSavedFields(Class<?> classToken) {
         List<Field> savedFields = new ArrayList<>();
 
