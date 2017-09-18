@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
  * В зависимости от общего типа пытаемся прочитать нужный кусок информации и распарсть его в значение поля,
  * удалив этот кусок из самой строки
  * Exception'ы чисто для галочки
+ * string.substring(string.indexOf()) во все поля
 */
 public class Serializer {
 
