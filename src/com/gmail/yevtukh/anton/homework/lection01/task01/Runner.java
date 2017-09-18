@@ -56,13 +56,12 @@ public class Runner {
 
         //Вся прелесть проверяемых исключенй. А можно как-то изящнее?
         return Arrays.stream(annotation.annotationType().getDeclaredMethods()).map(method -> {
-            Object result = null;
             try {
-                result = method.invoke(annotation);
+                return method.invoke(annotation);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 e.printStackTrace();
             }
-            return result;
+            return null;
         }).toArray();
     }
 }
