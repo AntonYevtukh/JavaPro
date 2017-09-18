@@ -22,6 +22,7 @@ public class Instantiator {
         }
         Object[] defaultParameters = Arrays.stream(constructor.getParameterTypes()).map(clazz -> getDefaultValue(clazz)).toArray();
 
+        constructor.setAccessible(true);
         return (T)constructor.newInstance(defaultParameters);
     }
 
