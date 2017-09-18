@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 /**
  * Created by Anton on 16.09.2017.
- * Серализует и десереализует во что-то похожее на JSON
+ * Серализует и десереализует во что-то похожее на JSON, по крайней мере JSON валидатор, говорит, что результаты корректны
  * Сериализует стандартные типы (примитивы, оболочки, строки), пользовательские объекты, массивы
  * (в том числе многомерные)
  * Много быдлокода, сделано в лоб, примерная идея (десереализации) такова:
@@ -20,7 +20,8 @@ import java.util.stream.Collectors;
  * В зависимости от общего типа пытаемся прочитать нужный кусок информации и распарсть его в значение поля,
  * удалив этот кусок из самой строки
  *
- * Exception'ы чисто для галочки
+ * Exception'ы чисто для галочки, в теории может распарсить не совсем валидный файл.
+ * Но валидные парсит нормально
  * string.substring(string.indexOf()) во все поля
 */
 public class Serializer {
@@ -53,7 +54,14 @@ public class Serializer {
     }
 
     public <T> T deserializeObject(Class<T> classToken) {
-        return parseObject(classToken, new String[]{FileIOUtils.readFromFile(savePath)});
+        try {
+            return parseObject(classToken, new String[]{FileIOUtils.readFromFile(savePath)});
+        } catch (RuntimeException e) {
+            System.err.println("Can't parse object from file:\n" + savePath);
+            System.err.println("May be file content is not valid");
+            e.printStackTrace();
+        }
+        return null;
     }
 
     private String objectToString(Object obj) {
