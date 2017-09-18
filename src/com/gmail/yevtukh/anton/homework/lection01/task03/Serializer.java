@@ -108,7 +108,8 @@ public class Serializer {
         return result.toString();
     }
 
-    //ObjectStringContainer - это как-бы эрзац-ref/out из C#, ибо каждый метод должен удалять начало строки,
+    //Т.к. передача ссылки по значению (как ref/out в C#) невозможна, строка заворачивается в контейнер-массив
+    //ObjectStringContainer, ибо каждый метод должен удалять начало строки,
     //т.е результаты манипуляций в теле метода с переданной строкой должны сохраняться
     private  <T> T parseObject(Class<T> classToken, String[] objectStringContainer) {
         try {
