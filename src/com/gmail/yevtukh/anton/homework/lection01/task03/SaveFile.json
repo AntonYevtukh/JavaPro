@@ -1,37 +1,37 @@
 {
-	"childClassArray": [
-		{
-			"doubleArray": [
-				0.0,
-				1.0
-			],
-			"booleanField": false,
-			"intField": 10,
-			"integerField": 20,
-			"stringField": "Hello!"
-		},
-		{
-			"doubleArray": [
-				0.0,
-				0.0,
-				0.0
-			],
-			"booleanField": true,
-			"intField": 14,
-			"integerField": 88,
-			"stringField": "Heil!"
-		}
-	],
-	"shortMatrix": [
-		[
-			1,
-			2,
-			3
-		],
-		[
-			10,
-			9,
-			8
-		]
-	]
+  "childClassArray": [
+    {
+      "doubleArray": [
+        0.0,
+        1.0
+      ],
+      "booleanField": false,
+      "intField": 10,
+      "integerField": 20,
+      "stringField": "Hello!"
+    },
+    {
+      "doubleArray": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "booleanField": true,
+      "intField": 14,
+      "integerField": 88,
+      "stringField": "Heil!"
+    }
+  ],
+  "shortMatrix": [
+    [
+      1,
+      2,
+      3
+    ],
+    [
+      10,
+      9,
+      8
+    ]
+  ]
 }

@@ -34,7 +34,7 @@ public class Serializer {
     private static final String OBJECT_END = "}";
     private static final String ARRAY_BEGIN = "[";
     private static final String ARRAY_END = "]";
-    private static final String INDENT = "\t";
+    private static final String INDENT = "  ";
 
     private static final Class<?>[] STANDARD_TYPES = {
             byte.class, Byte.class, short.class, Short.class, int.class, Integer.class, long.class, Long.class,
