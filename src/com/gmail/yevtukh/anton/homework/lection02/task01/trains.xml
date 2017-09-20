@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<trains>
+    <train id="743L">
+        <origin>Kyiv</origin>
+        <destination>Lviv</destination>
+        <date>20.09.2017</date>
+        <departure>17:35</departure>
+    </train>
+    <train id="726K">
+        <origin>Kyiv</origin>
+        <destination>Kharkiv</destination>
+        <date>13.09.2017</date>
+        <departure>18:01</departure>
+    </train>
+    <train id="734L">
+        <origin>Kyiv</origin>
+        <destination>Dnipro</destination>
+        <date>20.09.2017</date>
+        <departure>17:35</departure>
+    </train>
+</trains>
