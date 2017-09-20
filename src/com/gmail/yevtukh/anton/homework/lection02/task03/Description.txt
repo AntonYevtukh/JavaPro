@@ -1,0 +1,4 @@
+Написать парсер для Yahoo Finance в режиме XML (format=xml).
+http://query.yahooapis.com/v1/public/yql?format=xml&q=select
+* from yahoo.finance.xchange where pair in ("USDEUR",
+"USDUAH")&env=store://datatables.org/alltableswithkeys
