@@ -1,0 +1,17 @@
+{
+  "name": "Anton",
+  "surname": "Yevtukh",
+  "sites": [
+    "gmail.com",
+    "172ir.kiev.ua"
+  ],
+  "phones": [
+    "093-077-XX-XX",
+    "050-XXX-XX-XX"
+  ],
+  "address": {
+    "country": "Ukraine",
+    "city": "Kyiv",
+    "street": "Pryrichna"
+  }
+}
