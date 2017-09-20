@@ -3,8 +3,6 @@ package com.gmail.yevtukh.anton.homework.lection02.task03;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 /**
  * Created by Anton on 20.09.2017.
@@ -17,7 +15,7 @@ public class Runner {
             "&env=store://datatables.org/alltableswithkeys";
 
     public static void main(String[] args) {
-        //System.out.println(LocalDate.parse("11/20/2016", DateTimeFormatter.ofPattern("M/dd/yyyy")));
+
         try {
             saveResponseToFile(QUERY_STRING, SAVE_PATH);
             System.out.println(XmlUtils.unmarshal(Query.class, SAVE_PATH));

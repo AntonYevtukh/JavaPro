@@ -1,4 +1,6 @@
-package com.gmail.yevtukh.anton.homework.lection02.task01;
+package com.gmail.yevtukh.anton.homework.lection02.task01.adapters;
+
+import com.gmail.yevtukh.anton.homework.lection02.task01.Train;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import java.time.LocalDate;

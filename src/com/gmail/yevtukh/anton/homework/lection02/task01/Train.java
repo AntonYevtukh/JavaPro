@@ -1,5 +1,8 @@
 package com.gmail.yevtukh.anton.homework.lection02.task01;
 
+import com.gmail.yevtukh.anton.homework.lection02.task01.adapters.LocalDateAdapter;
+import com.gmail.yevtukh.anton.homework.lection02.task01.adapters.LocalTimeAdapter;
+
 import javax.xml.bind.annotation.*;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.time.LocalDate;
